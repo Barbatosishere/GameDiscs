@@ -94,7 +94,7 @@ public class BlocktrisGame extends Game {
 
     @Override
     public int gameTickDuration() {
-        return (int)(10f / ((float)score / 50f + 1f));
+        return Math.max(1, (int)(10f / ((float)score / 50f + 1f)));
     }
 
     @Override
