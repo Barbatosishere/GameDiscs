@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+[[mods]]
+modId="gamediscs_regression"
+version="1.0"
+displayName="Game Discs Client Regressions"
+[[dependencies.gamediscs_regression]]
+modId="gamediscs"
+type="required"
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"

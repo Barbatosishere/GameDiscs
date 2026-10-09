@@ -1,0 +1,33 @@
+// Optional regression mod; excluded from the normal build and published jar.
+allprojects {
+    afterEvaluate {
+        def regression = sourceSets.create('clientRegression') {
+            java.srcDir 'src/clientTest/java'
+            resources.srcDir 'src/clientTest/resources'
+            compileClasspath = sourceSets.main.output + sourceSets.main.compileClasspath
+            runtimeClasspath += sourceSets.main.runtimeClasspath
+        }
+        neoForge.mods { gamediscs_regression { sourceSet(regression) } }
+        def regressionRoot = layout.buildDirectory.dir('client-regression').get().asFile
+        neoForge.runs {
+            regressionClient {
+                client()
+                gameDirectory = new File(regressionRoot, 'run')
+                programArguments.addAll '--width', '640', '--height', '480'
+                systemProperty 'gamediscs.regression.output', new File(regressionRoot, 'results.txt').absolutePath
+                logLevel = org.slf4j.event.Level.INFO
+            }
+        }
+        tasks.named('runRegressionClient') {
+            doFirst {
+                delete new File(regressionRoot, 'results.txt')
+            }
+            doLast {
+                def report = new File(regressionRoot, 'results.txt')
+                if (!report.isFile() || !report.text.contains('failures=0')) {
+                    throw new GradleException('Client regressions failed; see build/client-regression/results.txt')
+                }
+            }
+        }
+    }
+}
