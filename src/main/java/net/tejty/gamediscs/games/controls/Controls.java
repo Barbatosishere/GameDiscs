@@ -28,6 +28,9 @@ public class Controls {
      * @param isDown True means pressed, false means not pressed
      */
     public void setButton(Button button, boolean isDown) {
+        if (isButtonDown(button) == isDown) {
+            return;
+        }
         // Determines if the event should be called (if the button was already pressed, the event will not be called)
         boolean callEvent = false;
         switch (button) {
@@ -85,6 +88,12 @@ public class Controls {
         else {
             game.buttonUp(button);
         }
+    }
+
+    /** Clears held buttons and pending repeat flags without calling game callbacks. */
+    public void reset() {
+        up = down = left = right = button1 = button2 = false;
+        was_up = was_down = was_left = was_right = was_b1 = was_b2 = false;
     }
 
     /**

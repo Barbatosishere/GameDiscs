@@ -108,6 +108,7 @@ public class Game {
     }
 
     public void respawn() {
+        controls.reset();
         stage = GameStage.START;
         ticks = 1;
         particles.clear();
@@ -167,16 +168,11 @@ public class Game {
             gameTick();
         }
         // Move particles
-        int i = 0;
-        while (i < particles.size()) {
-            Particle particle = particles.get(i);
+        for (Particle particle : particles) {
             particle.tick();
-            if (particle.isDead()) {
-                particles.remove(i);
-                i--;
-            }
-            i++;
         }
+        // ArrayList removes expired particles in one stable, linear pass.
+        particles.removeIf(Particle::isDead);
         // Counts ticks
         ticks++;
     }
