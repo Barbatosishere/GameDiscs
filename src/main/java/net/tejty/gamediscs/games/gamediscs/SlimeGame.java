@@ -229,6 +229,9 @@ public class SlimeGame extends Game {
                 case DOWN -> direction = VecUtil.VEC_DOWN;
                 case LEFT -> direction = VecUtil.VEC_LEFT;
             }
+            if (VecUtil.is(slime.getLast().add(direction), slime.get(slime.size() - 2))) {
+                direction = oldDirection;
+            }
             if (!VecUtil.is(oldDirection, direction)) {
                     soundPlayer.play(SoundEvents.SLIME_SQUISH, 0.1f, 0.5f);
             }
