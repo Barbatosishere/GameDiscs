@@ -173,6 +173,9 @@ public class BlocktrisGame extends Game {
                     }
                     piece.setPos(4, 1);
                     switched = true;
+                    if (piece.isTouching()) {
+                        die();
+                    }
                 }
             }
         }
@@ -204,8 +207,8 @@ public class BlocktrisGame extends Game {
     }
 
     private void placePiece() {
-        switched = false;
         if (placementCooldown <= 0) {
+            switched = false;
             piece.place();
 
             int combo = 0;
