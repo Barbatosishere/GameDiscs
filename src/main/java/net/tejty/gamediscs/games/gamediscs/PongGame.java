@@ -127,25 +127,7 @@ public class PongGame extends Game {
         oponent.setY(Math.min(Math.max(oponent.getY(), 0), HEIGHT - oponent.getHeight()));
 
         if (ballTimer <= 0) {
-            Vec2 previous = ball.getPos();
-            ball.tick();
-            if (ball.getY() < 0 || ball.getY() + ball.getHeight() > HEIGHT) {
-                ball.moveBy(new Vec2(0, -ball.getVelocity().y));
-                ball.setVelocity(new Vec2(ball.getVelocity().x, -ball.getVelocity().y));
-                soundPlayer.playJump();
-            }
-
-            Sprite paddle = ball.getVelocity().x < 0 ? player : oponent;
-            // Trace the ball's corner against a paddle expanded by the ball size.
-            AABB bounds = new AABB(paddle.getX() - ball.getWidth(), paddle.getY() - ball.getHeight(), -1,
-                    paddle.getX() + paddle.getWidth(), paddle.getY() + paddle.getHeight(), 1);
-            Optional<Vec3> hit = bounds.clip(new Vec3(previous.x, previous.y, 0), new Vec3(ball.getX(), ball.getY(), 0));
-            if (hit.isPresent() || ball.isTouching(paddle)) {
-                hit.ifPresent(pos -> ball.setY((float) pos.y));
-                ball.setX(paddle == player ? paddle.getX() + paddle.getWidth() : paddle.getX() - ball.getWidth());
-                ball.setVelocity(ball.getCenterPos().add(paddle.getCenterPos().add(new Vec2(paddle == player ? -2 : 2, 0)).negated()).normalized().scale(ballSpeed));
-                soundPlayer.playJump();
-            }
+            moveBall();
 
             if (ball.getX() < 0) {
                 oponentScore++;
@@ -163,6 +145,40 @@ public class PongGame extends Game {
         }
         if (oponentScore >= 10) {
             die();
+        }
+    }
+
+    private void moveBall() {
+        Sprite paddle = ball.getVelocity().x < 0 ? player : oponent;
+        float face = paddle == player ? paddle.getX() + paddle.getWidth() : paddle.getX() - ball.getWidth();
+        AABB bounds = new AABB(paddle.getX() - ball.getWidth(), paddle.getY() - ball.getHeight(), -1,
+                paddle.getX() + paddle.getWidth(), paddle.getY() + paddle.getHeight(), 1);
+        double remaining = 1;
+        // Trace straight segments in collision order, preserving travel after each wall bounce.
+        while (remaining > 0) {
+            Vec2 previous = ball.getPos();
+            Vec2 velocity = ball.getVelocity();
+            float wall = velocity.y < 0 ? 0 : HEIGHT - ball.getHeight();
+            double wallTime = velocity.y == 0 ? Double.POSITIVE_INFINITY : (wall - (double) previous.y) / velocity.y;
+            boolean touching = ball.isTouching(paddle)
+                    || (previous.x == face && previous.y > bounds.minY && previous.y < bounds.maxY);
+            ball.moveBy(velocity.scale((float) Math.min(remaining, wallTime)));
+            Optional<Vec3> hit = touching ? Optional.of(new Vec3(previous.x, previous.y, 0))
+                    : bounds.clip(new Vec3(previous.x, previous.y, 0), new Vec3(ball.getX(), ball.getY(), 0));
+            if (hit.isPresent() || ball.isTouching(paddle)) {
+                hit.ifPresent(pos -> ball.setY((float) pos.y));
+                ball.setX(face);
+                ball.setVelocity(ball.getCenterPos().add(paddle.getCenterPos().add(new Vec2(paddle == player ? -2 : 2, 0)).negated()).normalized().scale(ballSpeed));
+                soundPlayer.playJump();
+                return;
+            }
+            if (wallTime > remaining || ball.getX() < 0 || ball.getX() + ball.getWidth() > WIDTH) {
+                return;
+            }
+            ball.setY(wall);
+            ball.setVelocity(new Vec2(velocity.x, -velocity.y));
+            soundPlayer.playJump();
+            remaining -= wallTime;
         }
     }
 
