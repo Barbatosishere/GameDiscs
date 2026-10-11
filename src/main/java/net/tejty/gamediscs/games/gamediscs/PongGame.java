@@ -3,13 +3,17 @@ package net.tejty.gamediscs.games.gamediscs;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.tejty.gamediscs.GameDiscsMod;
 import net.tejty.gamediscs.games.controls.Button;
 import net.tejty.gamediscs.games.graphics.MultiImage;
 import net.tejty.gamediscs.games.util.Game;
 import net.tejty.gamediscs.games.util.Sprite;
 import net.tejty.gamediscs.games.util.VecUtil;
+
+import java.util.Optional;
 
 public class PongGame extends Game {
     private Sprite player = new Sprite(
@@ -123,7 +127,26 @@ public class PongGame extends Game {
         oponent.setY(Math.min(Math.max(oponent.getY(), 0), HEIGHT - oponent.getHeight()));
 
         if (ballTimer <= 0) {
-            ball.moveBy(new Vec2(ball.getVelocity().x, 0));
+            Vec2 previous = ball.getPos();
+            ball.tick();
+            if (ball.getY() < 0 || ball.getY() + ball.getHeight() > HEIGHT) {
+                ball.moveBy(new Vec2(0, -ball.getVelocity().y));
+                ball.setVelocity(new Vec2(ball.getVelocity().x, -ball.getVelocity().y));
+                soundPlayer.playJump();
+            }
+
+            Sprite paddle = ball.getVelocity().x < 0 ? player : oponent;
+            // Trace the ball's corner against a paddle expanded by the ball size.
+            AABB bounds = new AABB(paddle.getX() - ball.getWidth(), paddle.getY() - ball.getHeight(), -1,
+                    paddle.getX() + paddle.getWidth(), paddle.getY() + paddle.getHeight(), 1);
+            Optional<Vec3> hit = bounds.clip(new Vec3(previous.x, previous.y, 0), new Vec3(ball.getX(), ball.getY(), 0));
+            if (hit.isPresent() || ball.isTouching(paddle)) {
+                hit.ifPresent(pos -> ball.setY((float) pos.y));
+                ball.setX(paddle == player ? paddle.getX() + paddle.getWidth() : paddle.getX() - ball.getWidth());
+                ball.setVelocity(ball.getCenterPos().add(paddle.getCenterPos().add(new Vec2(paddle == player ? -2 : 2, 0)).negated()).normalized().scale(ballSpeed));
+                soundPlayer.playJump();
+            }
+
             if (ball.getX() < 0) {
                 oponentScore++;
                 resetBall();
@@ -132,25 +155,6 @@ public class PongGame extends Game {
                 score++;
                 soundPlayer.playPoint();
                 resetBall();
-            }
-            if (ballTimer <= 0) {
-                ball.moveBy(new Vec2(0, ball.getVelocity().y));
-                if (ball.getY() < 0 || ball.getY() + ball.getHeight() > HEIGHT) {
-                    ball.moveBy(new Vec2(0, -ball.getVelocity().y));
-                    ball.setVelocity(new Vec2(ball.getVelocity().x, -ball.getVelocity().y));
-                    soundPlayer.playJump();
-                }
-
-                if (ball.isTouching(player)) {
-                    ball.setX(player.getX() + player.getWidth());
-                    ball.setVelocity(ball.getCenterPos().add(player.getCenterPos().add(new Vec2(-2, 0)).negated()).normalized().scale(ballSpeed));
-                    soundPlayer.playJump();
-                }
-                if (ball.isTouching(oponent)) {
-                    ball.setX(oponent.getX() - ball.getWidth());
-                    ball.setVelocity(ball.getCenterPos().add(oponent.getCenterPos().add(new Vec2(2, 0)).negated()).normalized().scale(ballSpeed));
-                    soundPlayer.playJump();
-                }
             }
         }
 
