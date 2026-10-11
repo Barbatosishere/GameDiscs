@@ -142,10 +142,12 @@ public class PongGame extends Game {
                 }
 
                 if (ball.isTouching(player)) {
+                    ball.setX(player.getX() + player.getWidth());
                     ball.setVelocity(ball.getCenterPos().add(player.getCenterPos().add(new Vec2(-2, 0)).negated()).normalized().scale(ballSpeed));
                     soundPlayer.playJump();
                 }
                 if (ball.isTouching(oponent)) {
+                    ball.setX(oponent.getX() - ball.getWidth());
                     ball.setVelocity(ball.getCenterPos().add(oponent.getCenterPos().add(new Vec2(2, 0)).negated()).normalized().scale(ballSpeed));
                     soundPlayer.playJump();
                 }
