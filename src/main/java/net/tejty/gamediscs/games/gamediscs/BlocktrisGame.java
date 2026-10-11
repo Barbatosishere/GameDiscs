@@ -236,6 +236,9 @@ public class BlocktrisGame extends Game {
                             grid.set(x, line + 1, grid.get(x, line));
                         }
                     }
+                    for (int x = 0; x < grid.width(); x++) {
+                        grid.set(x, 0, 0);
+                    }
                     y++;
                 }
                 y--;
