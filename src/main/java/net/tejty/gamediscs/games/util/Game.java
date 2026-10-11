@@ -108,6 +108,7 @@ public class Game {
     }
 
     public void respawn() {
+        controls.reset();
         stage = GameStage.START;
         ticks = 1;
         particles.clear();
